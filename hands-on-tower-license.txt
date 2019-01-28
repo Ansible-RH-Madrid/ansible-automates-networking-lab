@@ -1,0 +1,12 @@
+{
+    "company_name": "Red Hat", 
+    "contact_email": "mriverap@redhat.com", 
+    "contact_name": "Moises Rivera", 
+    "hostname": "e8a42c90512e44d69b05b9940f01c707", 
+    "instance_count": 10, 
+    "license_date": 1548352821, 
+    "license_key": "7208c1393e213a6312c6127fc5129458e54ef20a29b01f8e639efec2c0fb3324", 
+    "license_type": "enterprise", 
+    "subscription_name": "Red Hat Ansible Tower, Standard (10 Managed Nodes) Trial", 
+    "trial": true
+}
