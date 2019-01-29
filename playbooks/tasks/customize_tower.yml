@@ -1,0 +1,107 @@
+---
+- name: "Customize Tower for host: {{ hostvars['localhost'][item]['tower_instance'] }}"
+  debug:
+      msg:
+          - "Customize Tower with user: {{ hostvars['localhost'][item]['tower_user'] }}"
+          - "Customize Tower with password: {{ hostvars['localhost'][item]['tower_password'] }}"
+
+            #- name: 'Config Tower Host on Config File'
+            #  tower_settings:
+            #      name: tower_host
+            #      value: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+            #      tower_verify_ssl: False
+            #      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+            #      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+            #      tower_host: "https://{{ hostvars['localhost'][item]['tower_instance'] }}"
+            #
+            #- name: 'Config Username on Tower File'
+            #  tower_settings:
+            #      name: username
+            #      value: "{{ hostvars['localhost'][item]['tower_user'] }}"
+            #      tower_verify_ssl: False
+            #      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+            #      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+            #      tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+            #
+            #- name: 'Config Password on Tower File'
+            #  tower_settings:
+            #      name: password
+            #      value: "{{ hostvars['localhost'][item]['tower_password'] }}"
+            #      tower_verify_ssl: False
+            #      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+            #      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+            #      tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+            #  no_log: true
+
+            #- name: 'Config Verify SSL on Tower File'
+            #  tower_settings:
+            #      name: tower_verify_ssl
+            #      value: False
+            #      tower_verify_ssl: False
+            #      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+            #      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+            #
+- debug:
+    var: hostvars['localhost']
+
+- name: 'Create Tower Organization'
+  tower_organization:
+      name: "{{ hostvars['localhost']['common.yml']['f5_org'] }}"
+      description: "Ansible Automates Madrid F5 Laboratory Organization"
+      tower_verify_ssl: False
+      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+      tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+      state: present
+
+- name: 'Create Tower User for F5 Lab'
+  tower_user:
+      username: "{{ hostvars['localhost']['common.yml']['f5_lab_user'] }}"
+      password: "{{ hostvars['localhost']['common.yml']['f5_lab_pass'] }}"
+      email: 'default@example.org'
+      first_name: 'John'
+      last_name: 'Doe'
+      tower_verify_ssl: False
+      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+      tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+      state: present
+
+- name: 'Escale permissions for F5 lab user'
+  tower_role:
+      user: "{{ hostvars['localhost']['common.yml']['f5_lab_user'] }}"
+      organization: "{{ hostvars['localhost']['common.yml']['f5_org'] }}"
+      role: admin
+      tower_verify_ssl: False
+      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+      tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+      state: present
+
+- name: 'Create F5 Lab Project'
+  tower_project:
+      name: "{{ hostvars['localhost']['common.yml']['f5_project'] }}"
+      description: "Ansible Automates Madrid F5 Laboratory Project"
+      organization: "{{ hostvars['localhost']['common.yml']['f5_org'] }}"
+      scm_url: "{{ hostvars['localhost']['common.yml']['f5_scm_url'] }}"
+      scm_branch: "{{ hostvars['localhost']['common.yml']['f5_scm_branch'] }}"
+      tower_verify_ssl: False
+      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+      tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+      state: present
+
+- name: 'Create credentials for Load Balancers'
+  tower_credential:
+      name: "{{ hostvars['localhost']['common.yml']['f5_cred_lb'] }}"
+      description: 'Credential for Load Balancers'
+      organization: "{{ hostvars['localhost']['common.yml']['f5_org'] }}"
+      kind: net
+      username: "{{ hostvars['localhost']['common.yml']['f5_cred_user'] }}"
+      password: "{{ hostvars['localhost']['common.yml']['f5_cred_pass'] }}"
+      tower_verify_ssl: False
+      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+      tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+      state: present
+

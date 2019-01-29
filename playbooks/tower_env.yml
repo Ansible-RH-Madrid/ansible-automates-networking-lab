@@ -1,0 +1,104 @@
+---
+## Steps to work with Ansible Tower
+# - Firts one join through WebUI to your Ansible Tower instance: https://X.X.X.X
+# - The username will be admin
+# - The password is ansible
+# - Set the license, you could find it here
+
+- name: 'Import Tower Customization'
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  vars:
+      - instances: []
+  tasks:
+      - name: 'Load common variables'
+        include_vars:
+            dir: "{{ playbook_dir }}/../vars"
+            name: "common.yml"
+
+      - name: 'Iterate over Var files'
+        set_fact:
+          instances: "{{ instances + [ item | basename ]}}"
+        with_fileglob: "{{ playbook_dir }}/../students/*.yml" 
+
+      - name: 'Import var filler'
+        include_tasks: "{{ playbook_dir }}/tasks/var_extend.yml"
+        with_items: "{{ instances }}"
+
+      - debug:
+          var: hostvars['localhost'][item]
+          verbosity: 1
+        with_items: "{{ instances }}"
+
+      - name: 'Create build folder to download files'
+        file:
+            path: "{{ playbook_dir }}/../build/{{ hostvars['localhost'][item]['tower_instance'] }}/"
+            state: directory
+            recurse: true
+        with_items:
+            - "{{ hostvars['localhost']['instances'] }}"
+
+      - name: 'Create in-memory inventory'
+        add_host:
+            group: tower
+            hostname: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+            ansible_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+            ansible_user: "{{ hostvars['localhost'][item]['ansible_user'] }}"
+            ansible_ssh_pass: "{{ hostvars['localhost'][item]['tower_password'] }}"
+        with_items:
+            - "{{ instances }}"
+
+      - name: 'Customize Tower'
+        include_tasks: "{{ playbook_dir }}/tasks/customize_tower.yml"
+        with_items: "{{ instances }}"
+
+- name: 'Executing remote tasks'
+  hosts: tower
+  gather_facts: false
+  tasks:
+    - name: 'Create credentials for Web Servers'
+      tower_credential:
+          name: "{{ hostvars['localhost']['common.yml']['f5_cred_web'] }}"
+          description: 'Credential for WebServers'
+          organization: "{{ hostvars['localhost']['common.yml']['f5_org'] }}"
+          kind: ssh
+          username: "{{ hostvars['localhost']['common.yml']['f5_ec2_user'] }}"
+          ssh_key_data: ".ssh/aws-private.pem"
+          tower_verify_ssl: False
+          tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+          tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+          tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+          state: present
+      with_items:
+          - "{{ hostvars['localhost']['instances'] }}"
+      when:
+          - "hostvars['localhost'][item]['tower_instance'] == ansible_host"
+
+    - block:
+        - name: 'Load F5 Lab inventory'
+          tower_inventory:
+              name: "{{ hostvars['localhost']['common.yml']['f5_inv'] }}"
+              description: "F5 Lab Inventory"
+              organization: "{{ hostvars['localhost']['common.yml']['f5_org'] }}"
+              variables: "networking-workshop/lab_inventory/hosts"
+              tower_verify_ssl: False
+              tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+              tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+              tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+              state: present
+          with_items:
+              - "{{ hostvars['localhost']['instances'] }}"
+          when:
+              - "hostvars['localhost'][item]['tower_instance'] == ansible_host"
+      rescue:
+          # WARNING: NON-IDEMPOTENT TASK
+        - name: '[RESCUE] There is a bug into tower inventory, cannot load an INI file into tower'
+          become: True
+          command: "awx-manage inventory_import --inventory-name Inventory --source /home/{{ hostvars['localhost'][item]['ansible_user'] }}/networking-workshop/lab_inventory/hosts"
+          with_items:
+              - "{{ hostvars['localhost']['instances'] }}"
+          when:
+              - "hostvars['localhost'][item]['tower_instance'] == ansible_host"
+
+

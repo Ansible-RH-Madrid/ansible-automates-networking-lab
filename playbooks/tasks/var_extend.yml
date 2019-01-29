@@ -1,0 +1,5 @@
+---
+- name: "Load profile variables for file:  {{ item }}"
+  include_vars:
+      dir: "{{ playbook_dir }}/../students"
+      name: "{{ item }}"

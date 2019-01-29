@@ -1,0 +1,13 @@
+---
+f5_org: 'F5 Lab'
+f5_project: 'F5 Laboratory'
+f5_lab_user: 'f5admin'
+f5_lab_pass: 'ansible'
+f5_scm_url: 'https://github.com/network-automation/linklight'
+f5_scm_branch: 'exercises/ansible_f5'
+f5_cred_web: 'WebServers'
+f5_ec2_user: 'ec2-user'
+f5_cred_lb: 'LB'
+f5_cred_user: 'admin'
+f5_cred_pass: 'admin'
+f5_inv: 'F5 Inventory'
