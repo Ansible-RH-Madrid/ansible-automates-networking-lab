@@ -19,25 +19,22 @@
 
       - name: 'Iterate over Var files'
         set_fact:
-          instances: "{{ instances + [ item | basename ]}}"
+            instances: "{{ instances + [ item | basename ]}}"
         with_fileglob: "{{ playbook_dir }}/../students/*.yml" 
 
-      - name: 'Import var filler'
-        include_tasks: "{{ playbook_dir }}/tasks/var_extend.yml"
+      - name: "Load profile variables from file: {{ item }}"
+        include_vars:
+            file: "{{ playbook_dir }}/../students/{{ item }}"
+            name: "{{ item }}"
         with_items: "{{ instances }}"
 
       - debug:
-          var: hostvars['localhost'][item]
-          verbosity: 1
+            var: hostvars['localhost'][item]
+            verbosity: 1
         with_items: "{{ instances }}"
 
-      - name: 'Create build folder to download files'
-        file:
-            path: "{{ playbook_dir }}/../build/{{ hostvars['localhost'][item]['tower_instance'] }}/"
-            state: directory
-            recurse: true
-        with_items:
-            - "{{ hostvars['localhost']['instances'] }}"
+      - pause:
+          seconds: 100
 
       - name: 'Create in-memory inventory'
         add_host:
@@ -51,6 +48,8 @@
 
       - name: 'Customize Tower'
         include_tasks: "{{ playbook_dir }}/tasks/customize_tower.yml"
+        vars:
+            job_templates: False
         with_items: "{{ instances }}"
 
 - name: 'Executing remote tasks'
@@ -75,23 +74,6 @@
       when:
           - "hostvars['localhost'][item]['tower_instance'] == ansible_host"
 
-            # - name: 'Import inventory file'
-            #   tower_inventory_source:
-            #       name: "{{ hostvars['localhost']['common.yml']['f5_inv'] }} Source"
-            #       description: 'F5 Inventory Source'
-            #       inventory: "{{ hostvars['localhost']['common.yml']['f5_inv'] }}"
-            #       source: file
-            #       source_script: "/home/{{ hostvars['localhost'][item]['ansible_user'] }}/networking-workshop/lab_inventory/hosts" 
-            #       tower_verify_ssl: False
-            #       tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
-            #       tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
-            #       tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
-            #       state: present
-            #   with_items:
-            #       - "{{ hostvars['localhost']['instances'] }}"
-            #   when:
-            #       - "hostvars['localhost'][item]['tower_instance'] == ansible_host"
-
     - name: 'Import inventory file'
       become: True
       command: "awx-manage inventory_import --inventory-name {{ hostvars['localhost']['common.yml']['f5_inv'] }} --source /home/{{ hostvars['localhost'][item]['ansible_user'] }}/networking-workshop/lab_inventory/hosts"
@@ -99,3 +81,14 @@
           - "{{ hostvars['localhost']['instances'] }}"
       when:
           - "hostvars['localhost'][item]['tower_instance'] == ansible_host"
+
+- name: 'Continue Tower Customization'
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+      - name: 'Create Tower Job Templates'
+        include_tasks: "{{ playbook_dir }}/tasks/customize_tower.yml"
+        vars:
+            job_templates: True
+        with_items: "{{ instances }}"

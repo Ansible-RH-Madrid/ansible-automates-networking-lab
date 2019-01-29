@@ -1,0 +1,5 @@
+---
+tower_instance: '3.89.253.71'
+tower_user: 'admin'
+tower_password: 'ansible'
+ansible_user: 'student2'

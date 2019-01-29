@@ -4,114 +4,232 @@
       msg:
           - "Customize Tower with user: {{ hostvars['localhost'][item]['tower_user'] }}"
           - "Customize Tower with password: {{ hostvars['localhost'][item]['tower_password'] }}"
-
-            #- name: 'Config Tower Host on Config File'
-            #  tower_settings:
-            #      name: tower_host
-            #      value: "{{ hostvars['localhost'][item]['tower_instance'] }}"
-            #      tower_verify_ssl: False
-            #      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
-            #      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
-            #      tower_host: "https://{{ hostvars['localhost'][item]['tower_instance'] }}"
-            #
-            #- name: 'Config Username on Tower File'
-            #  tower_settings:
-            #      name: username
-            #      value: "{{ hostvars['localhost'][item]['tower_user'] }}"
-            #      tower_verify_ssl: False
-            #      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
-            #      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
-            #      tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
-            #
-            #- name: 'Config Password on Tower File'
-            #  tower_settings:
-            #      name: password
-            #      value: "{{ hostvars['localhost'][item]['tower_password'] }}"
-            #      tower_verify_ssl: False
-            #      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
-            #      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
-            #      tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
-            #  no_log: true
-
-            #- name: 'Config Verify SSL on Tower File'
-            #  tower_settings:
-            #      name: tower_verify_ssl
-            #      value: False
-            #      tower_verify_ssl: False
-            #      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
-            #      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
-            #
+          - "Mode Job Templates: {{ job_templates }}"
 - debug:
     var: hostvars['localhost']
+    verbosity: 1
 
-- name: 'Create Tower Organization'
-  tower_organization:
-      name: "{{ hostvars['localhost']['common.yml']['f5_org'] }}"
-      description: "Ansible Automates Madrid F5 Laboratory Organization"
-      tower_verify_ssl: False
-      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
-      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
-      tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
-      state: present
+- block:
+    - name: "Create Tower Organization on {{ hostvars['localhost'][item]['tower_instance'] }}"
+      tower_organization:
+          name: "{{ hostvars['localhost']['common.yml']['f5_org'] }}"
+          description: "Ansible Automates Madrid F5 Laboratory Organization"
+          tower_verify_ssl: False
+          tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+          tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+          tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+          state: present
+    
+    - name: "Create Tower User for F5 Lab on {{ hostvars['localhost'][item]['tower_instance'] }}"
+      tower_user:
+          username: "{{ hostvars['localhost']['common.yml']['f5_lab_user'] }}"
+          password: "{{ hostvars['localhost']['common.yml']['f5_lab_pass'] }}"
+          email: 'default@example.org'
+          first_name: 'John'
+          last_name: 'Doe'
+          tower_verify_ssl: False
+          tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+          tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+          tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+          state: present
+    
+    - name: "Escale permissions for F5 lab user on {{ hostvars['localhost'][item]['tower_instance'] }}"
+      tower_role:
+          user: "{{ hostvars['localhost']['common.yml']['f5_lab_user'] }}"
+          organization: "{{ hostvars['localhost']['common.yml']['f5_org'] }}"
+          role: admin
+          tower_verify_ssl: False
+          tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+          tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+          tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+          state: present
+    
+    - name: "Create F5 Lab Project on {{ hostvars['localhost'][item]['tower_instance'] }}"
+      tower_project:
+          name: "{{ hostvars['localhost']['common.yml']['f5_project'] }}"
+          description: "Ansible Automates Madrid F5 Laboratory Project"
+          organization: "{{ hostvars['localhost']['common.yml']['f5_org'] }}"
+          scm_url: "{{ hostvars['localhost']['common.yml']['f5_scm_url'] }}"
+          scm_branch: "{{ hostvars['localhost']['common.yml']['f5_scm_branch'] }}"
+          scm_type: 'git'
+          scm_update_on_launch: True
+          tower_verify_ssl: False
+          tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+          tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+          tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+          state: present
+    
+    - name: "Create credentials for Load Balancers on {{ hostvars['localhost'][item]['tower_instance'] }}"
+      tower_credential:
+          name: "{{ hostvars['localhost']['common.yml']['f5_cred_lb'] }}"
+          description: 'Credential for Load Balancers'
+          organization: "{{ hostvars['localhost']['common.yml']['f5_org'] }}"
+          kind: net
+          username: "{{ hostvars['localhost']['common.yml']['f5_cred_user'] }}"
+          password: "{{ hostvars['localhost']['common.yml']['f5_cred_pass'] }}"
+          tower_verify_ssl: False
+          tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+          tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+          tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+          state: present
+    
+    - name: "Create F5 Lab inventory on {{ hostvars['localhost'][item]['tower_instance'] }}"
+      tower_inventory:
+          name: "{{ hostvars['localhost']['common.yml']['f5_inv'] }}"
+          description: "F5 Lab Inventory"
+          organization: "{{ hostvars['localhost']['common.yml']['f5_org'] }}"
+          tower_verify_ssl: False
+          tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+          tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+          tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+          state: present
+  when: not job_templates
 
-- name: 'Create Tower User for F5 Lab'
-  tower_user:
-      username: "{{ hostvars['localhost']['common.yml']['f5_lab_user'] }}"
-      password: "{{ hostvars['localhost']['common.yml']['f5_lab_pass'] }}"
-      email: 'default@example.org'
-      first_name: 'John'
-      last_name: 'Doe'
-      tower_verify_ssl: False
-      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
-      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
-      tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
-      state: present
+- name: 'In order to give project time to get cloned lets wait some seconds'
+  pause:
+    seconds: 7
 
-- name: 'Escale permissions for F5 lab user'
-  tower_role:
-      user: "{{ hostvars['localhost']['common.yml']['f5_lab_user'] }}"
-      organization: "{{ hostvars['localhost']['common.yml']['f5_org'] }}"
-      role: admin
-      tower_verify_ssl: False
-      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
-      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
-      tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
-      state: present
+- block:
+    - name: "Add Job Template: 1.1-get-facts on {{ hostvars['localhost'][item]['tower_instance'] }}"
+      tower_job_template:
+          name: '1.1-get-facts'
+          job_type: 'run'
+          inventory: "{{ hostvars['localhost']['common.yml']['f5_inv'] }}"
+          project: "{{ hostvars['localhost']['common.yml']['f5_project'] }}"
+          playbook: 'exercises/ansible_f5/1.1-get-facts/bigip-facts.yml'
+          tower_verify_ssl: False
+          tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+          tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+          tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+          state: "present"
 
-- name: 'Create F5 Lab Project'
-  tower_project:
-      name: "{{ hostvars['localhost']['common.yml']['f5_project'] }}"
-      description: "Ansible Automates Madrid F5 Laboratory Project"
-      organization: "{{ hostvars['localhost']['common.yml']['f5_org'] }}"
-      scm_url: "{{ hostvars['localhost']['common.yml']['f5_scm_url'] }}"
-      scm_branch: "{{ hostvars['localhost']['common.yml']['f5_scm_branch'] }}"
-      tower_verify_ssl: False
-      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
-      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
-      tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
-      state: present
+    - name: "Add Job Template: 1.2-add-node on {{ hostvars['localhost'][item]['tower_instance'] }}"
+      tower_job_template:
+          name: '1.2-add-node'
+          job_type: 'run'
+          inventory: "{{ hostvars['localhost']['common.yml']['f5_inv'] }}"
+          project: "{{ hostvars['localhost']['common.yml']['f5_project'] }}"
+          playbook: 'exercises/ansible_f5/1.2-add-node/bigip-node.yml'
+          tower_verify_ssl: False
+          tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+          tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+          tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+          state: "present"
 
-- name: 'Create credentials for Load Balancers'
-  tower_credential:
-      name: "{{ hostvars['localhost']['common.yml']['f5_cred_lb'] }}"
-      description: 'Credential for Load Balancers'
-      organization: "{{ hostvars['localhost']['common.yml']['f5_org'] }}"
-      kind: net
-      username: "{{ hostvars['localhost']['common.yml']['f5_cred_user'] }}"
-      password: "{{ hostvars['localhost']['common.yml']['f5_cred_pass'] }}"
-      tower_verify_ssl: False
-      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
-      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
-      tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
-      state: present
+    - name: "Add Job Template: 1.3-add-pool on {{ hostvars['localhost'][item]['tower_instance'] }}"
+      tower_job_template:
+          name: '1.3-add-pool'
+          job_type: 'run'
+          inventory: "{{ hostvars['localhost']['common.yml']['f5_inv'] }}"
+          project: "{{ hostvars['localhost']['common.yml']['f5_project'] }}"
+          playbook: 'exercises/ansible_f5/1.3-add-pool/bigip-pool.yml'
+          tower_verify_ssl: False
+          tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+          tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+          tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+          state: "present"
 
-- name: 'Create F5 Lab inventory'
-  tower_inventory:
-      name: "{{ hostvars['localhost']['common.yml']['f5_inv'] }}"
-      description: "F5 Lab Inventory"
-      organization: "{{ hostvars['localhost']['common.yml']['f5_org'] }}"
-      tower_verify_ssl: False
-      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
-      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
-      tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
-      state: present
+    - name: "Add Job Template: 1.4-add-pool-members on {{ hostvars['localhost'][item]['tower_instance'] }}"
+      tower_job_template:
+          name: '1.4-add-pool-members'
+          job_type: 'run'
+          inventory: "{{ hostvars['localhost']['common.yml']['f5_inv'] }}"
+          project: "{{ hostvars['localhost']['common.yml']['f5_project'] }}"
+          playbook: 'exercises/ansible_f5/1.4-add-pool-members/bigip-pool-members.yml'
+          tower_verify_ssl: False
+          tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+          tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+          tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+          state: "present"
+
+    - name: "Add Job Template: 1.5-add-virtual-server on {{ hostvars['localhost'][item]['tower_instance'] }}"
+      tower_job_template:
+          name: '1.5-add-virtual-server'
+          job_type: 'run'
+          inventory: "{{ hostvars['localhost']['common.yml']['f5_inv'] }}"
+          project: "{{ hostvars['localhost']['common.yml']['f5_project'] }}"
+          playbook: 'exercises/ansible_f5/1.5-add-virtual-server/bigip-virtual-server.yml'
+          tower_verify_ssl: False
+          tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+          tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+          tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+          state: "present"
+
+    - name: "Add Job Template: 1.6-delete-configuration on {{ hostvars['localhost'][item]['tower_instance'] }}"
+      tower_job_template:
+          name: '1.6-delete-configuration'
+          job_type: 'run'
+          inventory: "{{ hostvars['localhost']['common.yml']['f5_inv'] }}"
+          project: "{{ hostvars['localhost']['common.yml']['f5_project'] }}"
+          playbook: 'exercises/ansible_f5/1.6-delete-configuration/bigip-delete-configuration.yml'
+          tower_verify_ssl: False
+          tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+          tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+          tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+          state: "present"
+
+    - name: "Add Job Template: 1.7-error-handling on {{ hostvars['localhost'][item]['tower_instance'] }}"
+      tower_job_template:
+          name: '1.7-error-handling'
+          job_type: 'run'
+          inventory: "{{ hostvars['localhost']['common.yml']['f5_inv'] }}"
+          project: "{{ hostvars['localhost']['common.yml']['f5_project'] }}"
+          playbook: 'exercises/ansible_f5/1.7-error-handling/bigip-error-handling.yml'
+          tower_verify_ssl: False
+          tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+          tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+          tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+          state: "present"
+
+    - name: "Add Job Template: 2.0-disable-pool-member on {{ hostvars['localhost'][item]['tower_instance'] }}"
+      tower_job_template:
+          name: '2.0-disable-pool-member'
+          job_type: 'run'
+          inventory: "{{ hostvars['localhost']['common.yml']['f5_inv'] }}"
+          project: "{{ hostvars['localhost']['common.yml']['f5_project'] }}"
+          playbook: 'exercises/ansible_f5/2.0-disable-pool-member/disable-pool-member.yml'
+          tower_verify_ssl: False
+          tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+          tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+          tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+          state: "present"
+
+    - name: "Add Job Template: 3.0-as3-intro on {{ hostvars['localhost'][item]['tower_instance'] }}"
+      tower_job_template:
+          name: '3.0-as3-intro'
+          job_type: 'run'
+          inventory: "{{ hostvars['localhost']['common.yml']['f5_inv'] }}"
+          project: "{{ hostvars['localhost']['common.yml']['f5_project'] }}"
+          playbook: 'exercises/ansible_f5/3.0-as3-intro/as3.yaml'
+          tower_verify_ssl: False
+          tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+          tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+          tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+          state: "present"
+
+    - name: "Add Job Template: 3.1-as3-change on {{ hostvars['localhost'][item]['tower_instance'] }}"
+      tower_job_template:
+          name: '3.1-as3-change'
+          job_type: 'run'
+          inventory: "{{ hostvars['localhost']['common.yml']['f5_inv'] }}"
+          project: "{{ hostvars['localhost']['common.yml']['f5_project'] }}"
+          playbook: 'exercises/ansible_f5/3.1-as3-change/as3.yaml'
+          tower_verify_ssl: False
+          tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+          tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+          tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+          state: "present"
+
+    - name: "Add Job Template: 3.2-as3-delete on {{ hostvars['localhost'][item]['tower_instance'] }}"
+      tower_job_template:
+          name: '3.2-as3-delete'
+          job_type: 'run'
+          inventory: "{{ hostvars['localhost']['common.yml']['f5_inv'] }}"
+          project: "{{ hostvars['localhost']['common.yml']['f5_project'] }}"
+          playbook: 'exercises/ansible_f5/3.2-as3-delete/delete.yaml'
+          tower_verify_ssl: False
+          tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+          tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+          tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+          state: "present"
+  when: job_templates      
