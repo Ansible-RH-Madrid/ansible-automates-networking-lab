@@ -105,3 +105,13 @@
       tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
       state: present
 
+- name: 'Create F5 Lab inventory'
+  tower_inventory:
+      name: "{{ hostvars['localhost']['common.yml']['f5_inv'] }}"
+      description: "F5 Lab Inventory"
+      organization: "{{ hostvars['localhost']['common.yml']['f5_org'] }}"
+      tower_verify_ssl: False
+      tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+      tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+      tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+      state: present

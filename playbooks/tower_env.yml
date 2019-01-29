@@ -75,30 +75,27 @@
       when:
           - "hostvars['localhost'][item]['tower_instance'] == ansible_host"
 
-    - block:
-        - name: 'Load F5 Lab inventory'
-          tower_inventory:
-              name: "{{ hostvars['localhost']['common.yml']['f5_inv'] }}"
-              description: "F5 Lab Inventory"
-              organization: "{{ hostvars['localhost']['common.yml']['f5_org'] }}"
-              variables: "networking-workshop/lab_inventory/hosts"
-              tower_verify_ssl: False
-              tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
-              tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
-              tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
-              state: present
-          with_items:
-              - "{{ hostvars['localhost']['instances'] }}"
-          when:
-              - "hostvars['localhost'][item]['tower_instance'] == ansible_host"
-      rescue:
-          # WARNING: NON-IDEMPOTENT TASK
-        - name: '[RESCUE] There is a bug into tower inventory, cannot load an INI file into tower'
-          become: True
-          command: "awx-manage inventory_import --inventory-name Inventory --source /home/{{ hostvars['localhost'][item]['ansible_user'] }}/networking-workshop/lab_inventory/hosts"
-          with_items:
-              - "{{ hostvars['localhost']['instances'] }}"
-          when:
-              - "hostvars['localhost'][item]['tower_instance'] == ansible_host"
+            # - name: 'Import inventory file'
+            #   tower_inventory_source:
+            #       name: "{{ hostvars['localhost']['common.yml']['f5_inv'] }} Source"
+            #       description: 'F5 Inventory Source'
+            #       inventory: "{{ hostvars['localhost']['common.yml']['f5_inv'] }}"
+            #       source: file
+            #       source_script: "/home/{{ hostvars['localhost'][item]['ansible_user'] }}/networking-workshop/lab_inventory/hosts" 
+            #       tower_verify_ssl: False
+            #       tower_username: "{{ hostvars['localhost'][item]['tower_user'] }}"
+            #       tower_password: "{{ hostvars['localhost'][item]['tower_password'] }}"
+            #       tower_host: "{{ hostvars['localhost'][item]['tower_instance'] }}"
+            #       state: present
+            #   with_items:
+            #       - "{{ hostvars['localhost']['instances'] }}"
+            #   when:
+            #       - "hostvars['localhost'][item]['tower_instance'] == ansible_host"
 
-
+    - name: 'Import inventory file'
+      become: True
+      command: "awx-manage inventory_import --inventory-name {{ hostvars['localhost']['common.yml']['f5_inv'] }} --source /home/{{ hostvars['localhost'][item]['ansible_user'] }}/networking-workshop/lab_inventory/hosts"
+      with_items:
+          - "{{ hostvars['localhost']['instances'] }}"
+      when:
+          - "hostvars['localhost'][item]['tower_instance'] == ansible_host"
