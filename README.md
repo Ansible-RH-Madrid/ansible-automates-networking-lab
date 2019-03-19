@@ -14,6 +14,8 @@ Laboratory for Ansible Automates event in Madrid 2019
 - Follow this steps to start with [F5 Lab](https://network-automation.github.io/linklight/exercises/ansible_f5/)
 - Use your token to login into the VM instance for Cisco Laboratory
 - Follow this steps to continue with [Cisco Lab](https://network-automation.github.io/linklight/exercises/networking_v2/)
+- Use your token to login into the VM instance for Engine Laboratory
+- Follow this steps to start with [Engine Lab](https://network-automation.github.io/linklight/exercises/ansible_engine/)
 
 
 ## Game Rules
